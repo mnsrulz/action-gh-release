@@ -86,7 +86,9 @@ async function run() {
           path,
           currentAssets,
         );
-        delete json.uploader;
+        if(json) {
+          delete json.uploader;
+        }
         return json;
       };
 
@@ -99,7 +101,10 @@ async function run() {
           assets.push(await uploadFile(path));
         }
       }
-      setOutput("assets", assets);
+      assets = assets.filter(k => k != null);
+      if(assets && assets.length > 0) {
+        setOutput("assets", assets);
+      }
     }
     console.log(`🎉 Release ready at ${rel.html_url}`);
     setOutput("url", rel.html_url);

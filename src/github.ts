@@ -168,12 +168,14 @@ export const upload = async (
     ({ name: currentName }) => currentName == alignAssetName(name),
   );
   if (currentAsset) {
-    console.log(`♻️ Deleting previously uploaded asset ${name}...`);
-    await github.rest.repos.deleteReleaseAsset({
-      asset_id: currentAsset.id || 1,
-      owner,
-      repo,
-    });
+    console.log(`♻️ Skipping previously uploaded asset ${name}...`);
+    return null;
+    // console.log(`♻️ Deleting previously uploaded asset ${name}...`);
+    // await github.rest.repos.deleteReleaseAsset({
+    //   asset_id: currentAsset.id || 1,
+    //   owner,
+    //   repo,
+    // });
   }
   console.log(`⬆️ Uploading ${name}...`);
   const endpoint = new URL(url);
