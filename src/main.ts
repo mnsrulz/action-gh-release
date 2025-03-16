@@ -8,7 +8,8 @@ import {
 import { release, upload, GitHubReleaser } from "./github";
 import { getOctokit } from "@actions/github";
 import { setFailed, setOutput } from "@actions/core";
-
+import pLimit from 'p-limit';
+import pRetry from 'p-retry';
 import { env } from "process";
 
 async function run() {
@@ -86,7 +87,7 @@ async function run() {
           path,
           currentAssets,
         );
-        if(json) {
+        if (json) {
           delete json.uploader;
         }
         return json;
@@ -94,7 +95,12 @@ async function run() {
 
       let assets;
       if (!config.input_preserve_order) {
-        assets = await Promise.all(files.map(uploadFile));
+        const limit = pLimit(10); //let it run 10 at a time
+        assets = await Promise.all(files.map(f => limit(() => {
+          return pRetry(()=> uploadFile(f), { retries: 5, factor: 3, onFailedAttempt: (fa)=> {
+            console.log(`Attemp#${fa.attemptNumber} - ${f}`);
+          } });
+        })));
       } else {
         assets = [];
         for (const path of files) {
@@ -102,7 +108,7 @@ async function run() {
         }
       }
       assets = assets.filter(k => k != null);
-      if(assets && assets.length > 0) {
+      if (assets && assets.length > 0) {
         setOutput("assets", assets);
       }
     }
