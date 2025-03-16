@@ -4,7 +4,6 @@ import { statSync } from "fs";
 import { open } from "fs/promises";
 import { getType } from "mime";
 import { basename } from "path";
-import pRetry from 'p-retry';
 
 type GitHub = InstanceType<typeof GitHub>;
 
@@ -183,19 +182,16 @@ export const upload = async (
   endpoint.searchParams.append("name", name);
   const fh = await open(path);
   try {
-    const run = async ()=> {
-      return await github.request({
-        method: "POST",
-        url: endpoint.toString(),
-        headers: {
-          "content-length": `${size}`,
-          "content-type": mime,
-          authorization: `token ${config.github_token}`,
-        },
-        data: fh.readableWebStream({ type: "bytes" }),
-      })
-    }
-    const resp = await pRetry(run, {retries: 5});
+    const resp = await github.request({
+      method: "POST",
+      url: endpoint.toString(),
+      headers: {
+        "content-length": `${size}`,
+        "content-type": mime,
+        authorization: `token ${config.github_token}`,
+      },
+      data: fh.readableWebStream({ type: "bytes" }),
+    })
     const json = resp.data;
     if (resp.status !== 201) {
       throw new Error(
