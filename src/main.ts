@@ -8,7 +8,7 @@ import {
 import { release, upload, GitHubReleaser } from "./github";
 import { getOctokit } from "@actions/github";
 import { setFailed, setOutput } from "@actions/core";
-
+import pLimit from 'p-limit';
 import { env } from "process";
 
 async function run() {
@@ -94,7 +94,8 @@ async function run() {
 
       let assets;
       if (!config.input_preserve_order) {
-        assets = await Promise.all(files.map(uploadFile));
+        const limit = pLimit(10); //let it run 10 at a time
+        assets = await Promise.all(files.map(f=> limit(()=> uploadFile(f))));
       } else {
         assets = [];
         for (const path of files) {
