@@ -97,7 +97,9 @@ async function run() {
       if (!config.input_preserve_order) {
         const limit = pLimit(10); //let it run 10 at a time
         assets = await Promise.all(files.map(f => limit(() => {
-          return pRetry(()=> uploadFile(f), { retries: 5 });
+          return pRetry(()=> uploadFile(f), { retries: 5, factor: 3, onFailedAttempt: (fa)=> {
+            console.log(`Attemp#${fa.attemptNumber} - ${f}`);
+          } });
         })));
       } else {
         assets = [];
